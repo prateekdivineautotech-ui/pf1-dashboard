@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRAT // TERMINAL — Core PF</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta http-equiv="refresh" content="300">
+<style>
+:root{
+  --bg0:#02040c; --panel:rgba(10,17,40,.62);
+  --grid:rgba(56,189,248,.07); --line:rgba(56,189,248,.18);
+  --cyan:#38bdf8; --cyan2:#7dd3fc; --teal:#2dd4bf; --mint:#34d399;
+  --amber:#fbbf24; --red:#f87171; --violet:#a78bfa; --pink:#f472b6;
+  --txt:#dbeafe; --dim:#7c8db5; --dimmer:#4a5a80;
+  --mono:'SF Mono','Cascadia Code',Consolas,monospace;
+  --sans:-apple-system,'Segoe UI',Inter,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg0)}
+body{font-family:var(--sans);color:var(--txt);font-size:16px;line-height:1.5;min-height:100vh;position:relative;overflow-x:hidden}
+.cosmos{position:fixed;inset:0;z-index:0;pointer-events:none}
+.cosmos canvas{position:absolute;inset:0}
+.nebula{background:
+  radial-gradient(ellipse 900px 500px at 85% -10%,rgba(56,189,248,.10),transparent 60%),
+  radial-gradient(ellipse 700px 450px at 0% 100%,rgba(167,139,250,.08),transparent 60%),
+  radial-gradient(ellipse 500px 300px at 50% 110%,rgba(45,212,191,.06),transparent 65%)}
+.grid-floor{background-image:linear-gradient(rgba(56,189,248,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.035) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 38%,black 30%,transparent 100%);
+  mask-image:radial-gradient(ellipse 75% 65% at 50% 38%,black 30%,transparent 100%)}
+.scanline{background:repeating-linear-gradient(0deg,rgba(56,189,248,.014) 0 1px,transparent 1px 4px);opacity:.4}
+.vignette{background:radial-gradient(ellipse 120% 100% at 50% 45%,transparent 60%,rgba(2,4,12,.85) 100%)}
+.wrap{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px 26px 48px}
+header.hud{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;
+  padding:14px 4px 18px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.brand h1{font-size:27px;font-weight:800;letter-spacing:.14em;color:var(--cyan);
+  text-shadow:0 0 22px rgba(56,189,248,.55),0 0 60px rgba(56,189,248,.25)}
+.brand h1 .thin{font-weight:300;color:var(--dim)}
+.brand .sub{font-size:12.5px;color:var(--dim);letter-spacing:.32em;text-transform:uppercase;margin-top:4px}
+.hud-right{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.hud-chip .k{font-size:11px;letter-spacing:.22em;color:var(--dimmer);text-transform:uppercase}
+.hud-chip .v{font-family:var(--mono);font-size:16px;color:var(--cyan2);margin-top:2px}
+.hud-chip .v.live{color:var(--mint);text-shadow:0 0 12px rgba(52,211,153,.6)}
+.blink{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mint);
+  box-shadow:0 0 10px var(--mint);margin-right:7px;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.tape{display:flex;gap:26px;align-items:center;padding:12px 18px;margin-bottom:22px;
+  background:linear-gradient(90deg,rgba(10,17,40,.7),rgba(5,10,24,.5));
+  border:1px solid var(--line);border-radius:12px;flex-wrap:wrap}
+.tape .idx{display:flex;gap:12px;align-items:baseline}
+.tape .nm{font-size:13px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+.tape .px{font-family:var(--mono);font-size:23px;font-weight:700;color:#f1f5f9}
+.tape .ch{font-family:var(--mono);font-size:15px;font-weight:600}
+.up{color:var(--mint)}.down{color:var(--red)}.flat{color:var(--dim)}
+.tape .spark{width:150px;height:34px;flex:none}
+.tape .div{width:1px;height:30px;background:var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--cyan),transparent 70%);opacity:.7}
+.kpi .k{font-size:11.5px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.kpi .v{font-family:var(--mono);font-size:25px;font-weight:700;color:#f1f5f9}
+.kpi .d{font-family:var(--mono);font-size:14px;margin-top:3px;color:var(--dim)}
+.kpi.hl{border-color:rgba(52,211,153,.35);box-shadow:0 0 26px rgba(52,211,153,.08) inset}
+.kpi.hl::before{background:linear-gradient(90deg,var(--mint),transparent 70%)}
+.grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;backdrop-filter:blur(6px)}
+.panel .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line)}
+.panel .hd h2{font-size:13px;font-weight:700;letter-spacing:.22em;color:var(--cyan2);text-transform:uppercase}
+.panel .hd .tag{font-size:11px;letter-spacing:.14em;color:var(--dimmer);font-family:var(--mono)}
+.panel .bd{padding:16px 18px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;letter-spacing:.14em;color:var(--dimmer);text-transform:uppercase;text-align:right;
+  padding:8px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child{text-align:left}
+td{font-family:var(--mono);font-size:15.5px;text-align:right;padding:11px 9px;
+  border-bottom:1px solid rgba(56,189,248,.07);white-space:nowrap}
+td:first-child{text-align:left;font-family:var(--sans)}
+tbody tr:hover td{background:rgba(56,189,248,.045)}
+.tname .n{font-weight:700;color:#e8f4ff;font-size:16px}
+.tname .s{font-size:11.5px;color:var(--dimmer);letter-spacing:.08em}
+tfoot td{border-top:1px solid var(--line);font-weight:700;color:#f1f5f9}
+.wbar{width:100px;height:6px;border-radius:3px;background:rgba(56,189,248,.12);overflow:hidden;display:inline-block;vertical-align:middle}
+.wbar>div{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--violet),var(--pink))}
+.gainers{display:flex;flex-direction:column;gap:9px}
+.g-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;
+  background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.09)}
+.g-item .rk{font-family:var(--mono);font-size:13px;color:var(--dimmer);width:20px}
+.g-item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g-item .nm .sym{font-weight:700;color:#e8f4ff;font-size:15.5px}
+.g-item .px{font-family:var(--mono);color:var(--cyan2);font-size:15px}
+.g-item .pc{font-family:var(--mono);font-weight:700;font-size:15.5px}
+.g-item.top{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.donut-wrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.legend{display:flex;flex-direction:column;gap:8px;flex:1;min-width:170px}
+.lg{display:flex;align-items:center;gap:9px;font-size:14px}
+.lg .sw{width:11px;height:11px;border-radius:3px;flex:none}
+.lg .lgn{flex:1;color:var(--txt)}
+.lg .pct{font-family:var(--mono);color:var(--dim);font-size:13.5px}
+.chart-box{width:100%;height:300px}
+.perf-bars{display:flex;flex-direction:column;gap:11px}
+.pb{display:grid;grid-template-columns:96px 1fr 84px;gap:10px;align-items:center}
+.pb .lbl{font-size:13px;color:var(--dim);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pb .trk{height:15px;background:rgba(56,189,248,.08);border-radius:4px;overflow:hidden;display:flex}
+.pb .fll{height:100%;display:flex;align-items:center}
+.pb .fll.pos{background:linear-gradient(90deg,rgba(52,211,153,.85),rgba(52,211,153,.3))}
+.pb .fll.neg{background:linear-gradient(90deg,rgba(248,113,113,.85),rgba(248,113,113,.3))}
+.pb .val{font-family:var(--mono);font-size:13.5px;text-align:right}
+.micro-note{font-size:12px;color:var(--dimmer);margin-top:10px;font-family:var(--mono)}
+.tvframe{width:100%;height:100%;border:0}
+footer{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 4px 0;
+  border-top:1px solid var(--line);margin-top:8px;font-size:12.5px;color:var(--dimmer);font-family:var(--mono)}
+.num-neg{color:var(--red)}.num-pos{color:var(--mint)}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.grid,.grid3{grid-template-columns:1fr}}
+th.sticky-col,td.sticky-col{position:sticky;left:0;z-index:2;background:var(--bg1)}
+@media(max-width:760px){
+  .panel .bd{padding:10px 8px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .table-wrap table{min-width:1080px;border-collapse:separate;border-spacing:0}
+  th.sticky-col,td.sticky-col{position:sticky;left:0;z-index:2;background:#050a18;box-shadow:2px 0 6px rgba(2,4,12,.85)}
+  .tape{gap:12px}
+  .tape .spark{display:none}
+  .kpi .v{font-size:20px}
+  .gainers{display:grid !important;grid-template-columns:1fr 1fr !important;gap:7px}
+  .g-item{padding:7px 8px}
+  .g-item .px{display:none}
+}
+@media(max-width:420px){.gainers{grid-template-columns:1fr !important}}
+</style>
+</head>
+<body>
+<div class="cosmos">
+  <canvas id="stars"></canvas>
+  <div class="nebula"></div>
+  <div class="grid-floor"></div>
+  <div class="scanline"></div>
+  <div class="vignette"></div>
+</div>
+
+<div class="wrap">
+  <header class="hud">
+    <div class="brand">
+      <h1>PRAT<span class="thin"> // </span>TERMINAL</h1>
+      <div class="sub">Core PF Command Deck · Institutional Research Console</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-chip"><div class="k">Book</div><div class="v">Prat — Core PF (ex-BracePort, ex-RIL/RE, ex-Bhagyanagar)</div></div>
+      <div class="hud-chip"><div class="k">Session</div><div class="v live"><span class="blink"></span>LIVE</div></div>
+      <div class="hud-chip"><div class="k">Data as of</div><div class="v">24 Sep 2026 · 14:15 IST</div></div>
+    </div>
+  </header>
+
+  <div class="tape">
+    <div class="idx"><span class="nm">Nifty 50</span>
+      <span class="px">23,057.55</span><span class="ch down">−389.25 (−1.66%)</span>
+      <svg class="spark" viewBox="0 0 150 34"><path d="M0.0,5.2 L1.9,4.6 L3.8,4.0 L5.7,3.4 L7.6,3.9 L9.5,3.6 L11.4,3.0 L13.3,4.0 L15.2,4.3 L17.1,5.1 L19.0,4.9 L20.9,4.8 L22.8,5.5 L24.7,6.2 L26.6,5.8 L28.5,4.8 L30.4,4.8 L32.3,4.8 L34.2,3.8 L36.1,19.1 L38.0,18.0 L39.9,16.8 L41.8,16.5 L43.7,17.7 L45.6,19.2 L47.5,18.4 L49.4,19.7 L51.3,19.2 L53.2,18.5 L55.1,18.2 L57.0,19.7 L58.9,19.6 L60.8,20.3 L62.7,20.3 L64.6,19.1 L66.5,18.9 L68.4,19.7 L70.3,19.0 L72.2,18.4 L74.1,18.2 L75.9,18.7 L77.8,19.6 L79.7,19.9 L81.6,18.0 L83.5,19.8 L85.4,19.4 L87.3,20.5 L89.2,20.3 L91.1,20.3 L93.0,20.6 L94.9,20.7 L96.8,21.2 L98.7,20.5 L100.6,20.6 L102.5,21.3 L104.4,21.1 L106.3,21.3 L108.2,21.9 L110.1,22.7 L112.0,22.6 L113.9,22.9 L115.8,23.1 L117.7,23.4 L119.6,23.2 L121.5,22.3 L123.4,22.4 L125.3,22.2 L127.2,22.5 L129.1,22.7 L131.0,24.7 L132.9,24.3 L134.8,25.2 L136.7,27.6 L138.6,28.0 L140.5,30.0 L142.4,31.0 L144.3,30.8 L146.2,29.9 L148.1,29.6 L150.0,29.3" fill="none" stroke="#f87171" stroke-width="1.6" style="filter:drop-shadow(0 0 3px rgba(248,113,113,.8))"/></svg></div>
+    <div class="div"></div>
+    <div class="idx"><span class="nm">Nifty Microcap 250</span>
+      <span class="px">26,404.6</span><span class="ch down">−1.45%</span>
+      <svg class="spark" viewBox="0 0 150 34"><path d="M0.0,13.8 L0.5,9.5 L1.0,9.6 L1.5,10.3 L2.0,14.9 L2.5,13.6 L3.0,13.3 L3.5,10.1 L4.0,8.5 L4.5,8.5 L5.0,7.9 L5.5,8.3 L6.0,9.8 L6.5,10.6 L7.0,10.2 L7.5,8.7 L8.0,8.2 L8.5,7.9 L9.0,8.8 L9.5,7.6 L10.0,6.6 L10.5,6.3 L11.0,6.5 L11.5,6.2 L12.0,6.3 L12.5,7.7 L13.0,9.3 L13.5,11.0 L14.0,12.0 L14.5,13.6 L15.0,13.3 L15.5,12.0 L16.0,12.3 L16.5,11.1 L17.0,9.7 L17.5,10.2 L18.0,12.2 L18.5,12.7 L19.0,13.4 L19.5,13.1 L20.0,13.6 L20.5,12.4 L21.0,11.7 L21.5,11.2 L22.0,12.5 L22.5,14.2 L23.0,15.3 L23.5,15.3 L24.0,13.9 L24.5,12.8 L25.0,12.1 L25.5,12.1 L26.0,12.3 L26.5,11.7 L27.0,11.3 L27.5,12.4 L28.0,12.5 L28.5,12.8 L29.0,11.9 L29.5,11.4 L30.0,12.0 L30.5,10.5 L31.0,10.1 L31.5,9.2 L32.0,9.5 L32.5,9.9 L33.0,10.8 L33.5,11.2 L34.0,11.1 L34.5,10.2 L35.0,10.7 L35.5,10.1 L36.0,9.8 L36.5,10.8 L37.0,10.6 L37.5,9.9 L38.0,8.7 L38.5,7.4 L39.0,7.0 L39.5,6.4 L40.0,7.1 L40.5,6.2 L41.0,6.1 L41.5,6.5 L42.0,6.4 L42.5,7.1 L43.0,7.3 L43.5,6.7 L44.0,7.5 L44.5,7.4 L45.0,7.0 L45.5,5.8 L46.0,5.5 L46.5,6.0 L47.0,5.7 L47.5,6.0 L48.0,5.6 L48.5,5.6 L49.0,5.4 L49.5,5.5 L50.0,4.5 L50.5,3.7 L51.0,3.2 L51.5,3.1 L52.0,3.1 L52.5,3.7 L53.0,3.4 L53.5,3.2 L54.0,3.6 L54.5,3.8 L55.0,3.8 L55.5,4.0 L56.0,3.4 L56.5,3.2 L57.0,3.0 L57.5,3.4 L58.0,3.7 L58.5,4.0 L59.0,4.7 L59.5,4.9 L60.0,5.0 L60.5,5.0 L61.0,4.6 L61.5,4.2 L62.0,4.6 L62.5,4.5 L63.0,5.2 L63.5,4.9 L64.0,4.7 L64.5,4.5 L65.0,4.7 L65.5,4.5 L66.0,4.8 L66.5,4.7 L67.0,4.6 L67.5,4.6 L68.0,5.9 L68.5,6.8 L69.0,6.8 L69.5,6.8 L70.0,6.7 L70.5,6.3 L71.0,6.7 L71.5,7.1 L72.0,7.3 L72.5,7.0 L73.0,6.8 L73.5,6.7 L74.0,6.3 L74.5,6.2 L75.0,6.3 L75.5,6.0 L76.0,5.9 L76.5,6.2 L77.0,6.1 L77.5,6.4 L78.0,6.7 L78.5,6.6 L79.0,7.0 L79.5,7.3 L80.0,7.2 L80.5,8.0 L81.0,8.3 L81.5,8.0 L82.0,7.6 L82.5,7.7 L83.0,7.2 L83.5,6.6 L84.0,6.7 L84.5,7.2 L85.0,7.1 L85.5,7.2 L86.0,7.7 L86.5,7.8 L87.0,7.9 L87.5,7.8 L88.0,7.9 L88.5,7.7 L89.0,8.1 L89.5,9.0 L90.0,9.0 L90.5,9.0 L91.0,9.1 L91.5,9.1 L92.0,9.1 L92.5,8.9 L93.0,8.8 L93.5,9.2 L94.0,9.4 L94.5,9.4 L95.0,9.8 L95.5,10.1 L96.0,9.9 L96.5,9.9 L97.0,9.9 L97.5,9.9 L98.0,10.0 L98.5,10.8 L99.0,11.2 L99.5,11.4 L100.0,11.8 L100.5,11.5 L101.0,11.5 L101.5,11.0 L102.0,10.6 L102.5,10.7 L103.0,10.6 L103.5,11.1 L104.0,11.1 L104.5,11.2 L105.0,11.4 L105.5,11.4 L106.0,11.5 L106.5,11.7 L107.0,11.6 L107.5,11.0 L108.0,10.9 L108.5,11.3 L109.0,11.5 L109.5,11.9 L110.0,12.3 L110.5,12.7 L111.0,13.1 L111.5,13.2 L112.0,13.4 L112.5,13.3 L113.0,12.8 L113.5,12.4 L114.0,12.1 L114.5,11.8 L115.0,11.2 L115.5,10.8 L116.0,10.2 L116.5,9.9 L117.0,10.1 L117.5,10.4 L118.0,10.2 L118.5,10.6 L119.0,10.6 L119.5,10.3 L120.0,10.7 L120.5,10.8 L121.0,11.2 L121.5,11.2 L122.0,11.7 L122.5,11.8 L123.0,11.8 L123.5,12.0 L124.0,12.4 L124.5,12.5 L125.0,13.1 L125.5,15.4 L126.0,16.9 L126.5,17.7 L127.0,17.7 L127.5,18.0 L128.0,17.5 L128.5,17.6 L129.0,16.9 L129.5,16.8 L130.0,17.0 L130.5,17.2 L131.0,17.5 L131.5,17.8 L132.0,18.7 L132.5,19.6 L133.0,19.7 L133.5,20.5 L134.0,21.1 L134.5,23.6 L135.0,25.7 L135.5,28.8 L136.0,28.2 L136.5,28.3 L137.0,27.5 L137.5,26.5 L138.0,26.9 L138.5,27.0 L139.0,27.5 L139.5,28.4 L140.0,27.7 L140.5,28.4 L141.0,29.5 L141.5,31.0 L142.0,30.9 L142.5,29.9 L143.0,28.9 L143.5,27.0 L144.0,27.5 L144.5,28.5 L145.0,28.3 L145.5,28.6 L146.0,28.0 L146.5,27.5 L147.0,27.3 L147.5,27.6 L148.0,28.5 L148.5,28.7 L149.0,28.4 L149.5,28.2 L150.0,28.1" fill="none" stroke="#f87171" stroke-width="1.6" style="filter:drop-shadow(0 0 3px rgba(248,113,113,.8))"/></svg></div>
+    <div class="div"></div>
+    <div class="idx"><span class="nm">PF Day P&amp;L</span>
+      <span class="px">−₹8,62,933</span><span class="ch down">−0.51%</span></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi hl"><div class="k">Portfolio Value</div><div class="v">₹16.78 Cr</div><div class="d">₹16,77,85,717</div></div>
+    <div class="kpi"><div class="k">Invested</div><div class="v">₹16.31 Cr</div><div class="d">cost basis</div></div>
+    <div class="kpi"><div class="k">Unrealised P&amp;L</div><div class="v num-pos">+₹0.46 Cr</div><div class="d">+2.84% on invested</div></div>
+    <div class="kpi"><div class="k">Day P&amp;L</div><div class="v num-neg">−₹8.6 L</div><div class="d">−0.51% on open</div></div>
+    <div class="kpi"><div class="k">Alpha vs Nifty · Day</div><div class="v num-pos">+1.15 ppt</div><div class="d">PF 1D% − Nifty 1D% (ppt)</div></div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="panel">
+      <div class="hd"><h2>Holdings Command</h2><span class="tag">4 positions · Excluded: BracePort · Reliance · RE · Bhagyanagar — excluded per instruction</span></div>
+      <div class="bd">
+        <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="sticky-col">Stock</th><th>RS</th><th>Qty</th><th>Avg ₹</th><th>CMP ₹</th><th>Day %</th>
+            <th>Day P&amp;L ₹</th><th>Unrl ₹</th><th>Unrl %</th><th>Value ₹</th><th>Wt %</th>
+          </tr></thead>
+          <tbody><tr><td class="sticky-col"><div class="tname"><span class="n">GMM Pfaudler</span></div></td><td class="num-pos" style="font-weight:700">92</td><td>18,806</td><td>1,444.00</td><td>1,475.40</td><td class="num-pos">+2.99%</td><td class="num-pos">+8,04,897</td><td class="num-pos">+5,94,872</td><td class="num-pos">+2.19%</td><td>2,77,46,372</td><td><span class="wbar"><div style="width:17%"></div></span> 16.5</td></tr><tr><td class="sticky-col"><div class="tname"><span class="n">Neogen Chemicals</span></div></td><td class="num-pos" style="font-weight:700">93</td><td>43,669</td><td>2,297.00</td><td>2,346.10</td><td class="num-neg">−1.92%</td><td class="num-neg">−20,08,774</td><td class="num-pos">+21,63,679</td><td class="num-pos">+2.16%</td><td>10,24,51,841</td><td><span class="wbar"><div style="width:61%"></div></span> 61.1</td></tr><tr><td class="sticky-col"><div class="tname"><span class="n">Ramkrishna Forgings</span></div></td><td class="num-pos" style="font-weight:700">82</td><td>2,400</td><td>735.00</td><td>706.10</td><td class="num-neg">−0.58%</td><td class="num-neg">−9,840</td><td class="num-neg">−69,035</td><td class="num-neg">−3.91%</td><td>16,94,640</td><td><span class="wbar"><div style="width:1%"></div></span> 1.0</td></tr><tr><td class="sticky-col"><div class="tname"><span class="n">Vivid Electromech</span></div></td><td class="" style="font-weight:700"></td><td>20,160</td><td>1,684.00</td><td>1,780.40</td><td class="num-pos">+0.99%</td><td class="num-pos">+3,50,784</td><td class="num-pos">+19,49,837</td><td class="num-pos">+5.74%</td><td>3,58,92,864</td><td><span class="wbar"><div style="width:21%"></div></span> 21.4</td></tr></tbody>
+          <tfoot><tr><td class="sticky-col">TOTAL</td><td></td><td></td><td></td><td class="num-neg">−0.51%</td><td class="num-neg">−8,62,933</td><td class="num-pos">+46,39,353</td><td class="num-pos">+2.84%</td><td>16,77,85,717</td><td>100.0</td></tr></tfoot>
+        </table>
+        </div>
+        <div class="micro-note">Vivid Electromech is NSE-Emerge (SME); RS not tracked by ChartMaze for SME listings.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="hd"><h2>Day P&amp;L Contribution</h2><span class="tag">₹ per stock</span></div>
+      <div class="bd perf-bars"><div class="pb"><span class="lbl">GMMPFAUDLR</span><span class="trk"><span class="fll pos" style="width:40%"></span></span><span class="val num-pos">+8,04,897</span></div><div class="pb"><span class="lbl">NEOGEN</span><span class="trk"><span class="fll neg" style="width:100%"></span></span><span class="val num-neg">−20,08,774</span></div><div class="pb"><span class="lbl">RKFORGE</span><span class="trk"><span class="fll neg" style="width:2%"></span></span><span class="val num-neg">−9,840</span></div><div class="pb"><span class="lbl">VIVIDEL</span><span class="trk"><span class="fll pos" style="width:17%"></span></span><span class="val num-pos">+3,50,784</span></div></div>
+    </div>
+    <div class="panel">
+      <div class="hd"><h2>Allocation</h2><span class="tag">% of book</span></div>
+      <div class="bd donut-wrap"><svg width="200" height="200" viewBox="0 0 200 200"><circle cx="100" cy="100" r="80" stroke="rgba(56,189,248,.1)" stroke-width="26" fill="none"/><path d="M100.00,20.00 A80,80 0 0 1 168.95,59.44" stroke="#7c3aed" stroke-width="26" fill="none" opacity="0.95"/><path d="M168.95,59.44 A80,80 0 1 1 21.06,87.00" stroke="#38bdf8" stroke-width="26" fill="none" opacity="0.95"/><path d="M21.06,87.00 A80,80 0 0 1 22.05,82.02" stroke="#f472b6" stroke-width="26" fill="none" opacity="0.95"/><path d="M22.05,82.02 A80,80 0 0 1 100.00,20.00" stroke="#2dd4bf" stroke-width="26" fill="none" opacity="0.95"/><text x="100" y="95" text-anchor="middle" fill="#7c8db5" font-size="10" letter-spacing="2">BOOK</text><text x="100" y="115" text-anchor="middle" fill="#f1f5f9" font-size="16" font-weight="700" font-family="monospace">₹16.78 Cr</text></svg><div class="legend"><div class="lg"><span class="sw" style="background:#7c3aed"></span><span class="lgn">GMM Pfaudler</span><span class="pct">16.5%</span></div><div class="lg"><span class="sw" style="background:#38bdf8"></span><span class="lgn">Neogen Chemicals</span><span class="pct">61.1%</span></div><div class="lg"><span class="sw" style="background:#f472b6"></span><span class="lgn">Ramkrishna Forgings</span><span class="pct">1.0%</span></div><div class="lg"><span class="sw" style="background:#2dd4bf"></span><span class="lgn">Vivid Electromech</span><span class="pct">21.4%</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="panel">
+      <div class="hd"><h2>Performance Track · YTD</h2><span class="tag">since inception 16 Sep · PF vs Nifty, rebased 100</span></div>
+      <div class="bd"><div class="chart-box"><svg width="100%" height="300" viewBox="0 0 640 300"><line x1="46" y1="274.0" x2="626" y2="274.0" stroke="rgba(56,189,248,.09)"/><text x="40" y="278.0" text-anchor="end" fill="#4a5a80" font-size="10" font-family="monospace">97.54</text><line x1="46" y1="209.0" x2="626" y2="209.0" stroke="rgba(56,189,248,.09)"/><text x="40" y="213.0" text-anchor="end" fill="#4a5a80" font-size="10" font-family="monospace">98.21</text><line x1="46" y1="144.0" x2="626" y2="144.0" stroke="rgba(56,189,248,.09)"/><text x="40" y="148.0" text-anchor="end" fill="#4a5a80" font-size="10" font-family="monospace">98.89</text><line x1="46" y1="79.0" x2="626" y2="79.0" stroke="rgba(56,189,248,.09)"/><text x="40" y="83.0" text-anchor="end" fill="#4a5a80" font-size="10" font-family="monospace">99.56</text><line x1="46" y1="14.0" x2="626" y2="14.0" stroke="rgba(56,189,248,.09)"/><text x="40" y="18.0" text-anchor="end" fill="#4a5a80" font-size="10" font-family="monospace">100.24</text><text x="46.0" y="292" text-anchor="middle" fill="#4a5a80" font-size="10" font-family="monospace">23 Sep</text><text x="338.1" y="292" text-anchor="middle" fill="#4a5a80" font-size="10" font-family="monospace">14:55</text><text x="626.0" y="292" text-anchor="middle" fill="#4a5a80" font-size="10" font-family="monospace">14:15</text><path d="M46.0,37.1 L50.3,43.9 L54.6,53.0 L58.9,50.7 L63.2,52.2 L67.5,48.5 L71.8,54.2 L76.1,59.3 L80.4,49.2 L84.7,49.3 L89.0,53.3 L93.3,54.1 L97.6,42.5 L101.9,42.6 L106.1,40.4 L110.4,39.8 L114.7,35.6 L119.0,34.6 L123.3,32.9 L127.6,32.9 L131.9,33.4 L136.2,32.5 L140.5,28.6 L144.8,24.9 L149.1,30.5 L153.4,28.6 L157.7,28.3 L162.0,23.1 L166.3,24.6 L170.6,23.8 L174.9,25.4 L179.2,28.4 L183.5,27.6 L187.8,20.1 L192.1,19.9 L196.4,15.9 L200.7,14.0 L205.0,17.7 L209.3,19.4 L213.6,19.5 L217.9,19.0 L222.1,19.7 L226.4,20.6 L230.7,21.5 L235.0,17.9 L239.3,16.9 L243.6,19.7 L247.9,20.7 L252.2,19.9 L256.5,18.8 L260.8,23.7 L265.1,29.6 L269.4,29.5 L273.7,27.0 L278.0,27.1 L282.3,28.3 L286.6,28.9 L290.9,25.3 L295.2,22.1 L299.5,18.5 L303.8,21.6 L308.1,19.8 L312.4,16.1 L316.7,22.1 L321.0,23.8 L325.3,28.4 L329.6,27.2 L333.9,26.5 L338.1,30.5 L342.4,34.9 L346.7,32.4 L351.0,26.5 L355.3,26.9 L359.6,26.9 L363.9,20.5 L368.2,110.8 L372.5,104.1 L376.8,97.2 L381.1,95.6 L385.4,102.5 L389.7,110.9 L394.0,106.3 L398.3,114.3 L402.6,111.4 L406.9,107.3 L411.2,105.5 L415.5,114.3 L419.8,113.5 L424.1,117.9 L428.4,117.6 L432.7,110.4 L437.0,109.5 L441.3,114.3 L445.6,110.2 L449.9,106.7 L454.1,105.4 L458.4,108.3 L462.7,113.5 L467.0,115.1 L471.3,104.2 L475.6,115.0 L479.9,112.5 L484.2,118.8 L488.5,117.4 L492.8,117.7 L497.1,119.2 L501.4,120.1 L505.7,123.0 L510.0,118.6 L514.3,119.5 L518.6,123.7 L522.9,122.6 L527.2,123.8 L531.5,126.9 L535.8,132.0 L540.1,131.4 L544.4,133.2 L548.7,134.3 L553.0,136.0 L557.3,134.8 L561.6,129.6 L565.9,130.2 L570.1,129.0 L574.4,130.3 L578.7,131.5 L583.0,143.6 L587.3,141.2 L591.6,146.7 L595.9,160.4 L600.2,162.7 L604.5,174.7 L608.8,180.5 L613.1,179.3 L617.4,174.1 L621.7,172.2 L626.0,170.3" fill="none" stroke="#7c8db5" stroke-width="1.6" stroke-dasharray="5 4"/><path d="M46.0,37.1 L50.3,40.2 L54.6,53.9 L58.9,55.9 L63.2,46.6 L67.5,60.4 L71.8,97.0 L76.1,92.1 L80.4,100.5 L84.7,109.8 L89.0,133.5 L93.3,140.4 L97.6,156.5 L101.9,150.4 L106.1,160.7 L110.4,156.8 L114.7,210.2 L119.0,201.0 L123.3,147.1 L127.6,127.6 L131.9,149.9 L136.2,138.9 L140.5,165.1 L144.8,174.7 L149.1,174.7 L153.4,177.1 L157.7,167.2 L162.0,164.7 L166.3,170.5 L170.6,183.6 L174.9,182.5 L179.2,173.7 L183.5,187.1 L187.8,196.9 L192.1,202.9 L196.4,191.6 L200.7,191.8 L205.0,189.9 L209.3,195.3 L213.6,211.4 L217.9,219.6 L222.1,187.1 L226.4,190.0 L230.7,166.6 L235.0,159.8 L239.3,167.4 L243.6,169.2 L247.9,167.5 L252.2,160.2 L256.5,161.0 L260.8,159.8 L265.1,158.5 L269.4,172.0 L273.7,164.7 L278.0,167.0 L282.3,146.2 L286.6,136.7 L290.9,142.5 L295.2,152.3 L299.5,160.2 L303.8,161.4 L308.1,159.5 L312.4,160.1 L316.7,167.3 L321.0,161.1 L325.3,170.2 L329.6,183.1 L333.9,184.2 L338.1,188.1 L342.4,187.5 L346.7,195.0 L351.0,187.6 L355.3,191.2 L359.6,195.0 L363.9,209.0 L368.2,206.4 L372.5,187.1 L376.8,169.5 L381.1,146.2 L385.4,146.5 L389.7,186.4 L394.0,141.2 L398.3,198.2 L402.6,214.7 L406.9,234.4 L411.2,214.2 L415.5,209.8 L419.8,109.0 L424.1,104.6 L428.4,127.1 L432.7,99.7 L437.0,98.7 L441.3,107.8 L445.6,100.0 L449.9,93.7 L454.1,93.6 L458.4,85.8 L462.7,86.2 L467.0,81.8 L471.3,84.6 L475.6,80.7 L479.9,88.2 L484.2,86.3 L488.5,95.4 L492.8,88.4 L497.1,87.0 L501.4,83.0 L505.7,93.9 L510.0,94.7 L514.3,99.5 L518.6,117.8 L522.9,116.4 L527.2,149.3 L531.5,156.7 L535.8,145.2 L540.1,199.1 L544.4,249.5 L548.7,243.1 L553.0,274.0 L557.3,269.4 L561.6,218.5 L565.9,202.6 L570.1,199.5 L574.4,169.8 L578.7,170.3 L583.0,170.0 L587.3,157.5 L591.6,164.5 L595.9,187.3 L600.2,190.5 L604.5,186.2 L608.8,215.1 L613.1,217.1 L617.4,205.4 L621.7,220.0 L626.0,224.4" fill="none" stroke="#38bdf8" stroke-width="2.4" style="filter:drop-shadow(0 0 5px rgba(56,189,248,.7))"/><text x="626" y="20" text-anchor="end" fill="#38bdf8" font-size="12" font-family="monospace">PF -1.95%</text><text x="626" y="36" text-anchor="end" fill="#7c8db5" font-size="12" font-family="monospace">NIFTY -1.38%</text></svg></div><div class="micro-note">PF curve excludes holdings without intraday history (Vivid — SME)</div></div>
+    </div>
+    <div class="panel">
+      <div class="hd"><h2>52-Week Range Position</h2><span class="tag">CMP vs 52w H/L</span></div>
+      <div class="bd"><div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;font-family:monospace;margin-bottom:4px"><span style="color:#7c8db5">GMMPFAUDLR</span><span style="color:#34d399">93% of range</span></div><div style="position:relative;height:10px;background:linear-gradient(90deg,rgba(248,113,113,.25),rgba(251,191,36,.25),rgba(52,211,153,.25));border-radius:5px"><div style="position:absolute;left:93%;top:-4px;width:4px;height:18px;background:#34d399;border-radius:2px;box-shadow:0 0 8px #34d399"></div></div><div style="display:flex;justify-content:space-between;font-size:10.5px;color:#4a5a80;font-family:monospace;margin-top:3px"><span>L ₹735</span><span>H ₹1,534</span></div></div><div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;font-family:monospace;margin-bottom:4px"><span style="color:#7c8db5">NEOGEN</span><span style="color:#34d399">90% of range</span></div><div style="position:relative;height:10px;background:linear-gradient(90deg,rgba(248,113,113,.25),rgba(251,191,36,.25),rgba(52,211,153,.25));border-radius:5px"><div style="position:absolute;left:90%;top:-4px;width:4px;height:18px;background:#34d399;border-radius:2px;box-shadow:0 0 8px #34d399"></div></div><div style="display:flex;justify-content:space-between;font-size:10.5px;color:#4a5a80;font-family:monospace;margin-top:3px"><span>L ₹967</span><span>H ₹2,500</span></div></div><div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;font-family:monospace;margin-bottom:4px"><span style="color:#7c8db5">RKFORGE</span><span style="color:#34d399">79% of range</span></div><div style="position:relative;height:10px;background:linear-gradient(90deg,rgba(248,113,113,.25),rgba(251,191,36,.25),rgba(52,211,153,.25));border-radius:5px"><div style="position:absolute;left:79%;top:-4px;width:4px;height:18px;background:#34d399;border-radius:2px;box-shadow:0 0 8px #34d399"></div></div><div style="display:flex;justify-content:space-between;font-size:10.5px;color:#4a5a80;font-family:monospace;margin-top:3px"><span>L ₹460</span><span>H ₹773</span></div></div><div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;font-family:monospace;margin-bottom:4px"><span style="color:#7c8db5">VIVIDEL</span><span style="color:#34d399">85% of range</span></div><div style="position:relative;height:10px;background:linear-gradient(90deg,rgba(248,113,113,.25),rgba(251,191,36,.25),rgba(52,211,153,.25));border-radius:5px"><div style="position:absolute;left:85%;top:-4px;width:4px;height:18px;background:#34d399;border-radius:2px;box-shadow:0 0 8px #34d399"></div></div><div style="display:flex;justify-content:space-between;font-size:10.5px;color:#4a5a80;font-family:monospace;margin-top:3px"><span>L ₹556</span><span>H ₹1,990</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr">
+    <div class="panel">
+      <div class="hd"><h2>Top 20 Gainers · NSE</h2><span class="tag">small &amp; microcap · day %</span></div>
+      <div class="bd gainers" style="display:grid;grid-template-columns:repeat(5,1fr);gap:9px"><div class="g-item top"><span class="rk">1</span><span class="nm"><span class="sym">INDIAGLYCO</span></span><span class="px">301.90</span><span class="pc up">+17.15%</span></div><div class="g-item"><span class="rk">2</span><span class="nm"><span class="sym">PRIORITY</span></span><span class="px">301.40</span><span class="pc up">+14.45%</span></div><div class="g-item"><span class="rk">3</span><span class="nm"><span class="sym">DCI</span></span><span class="px">301.10</span><span class="pc up">+12.10%</span></div><div class="g-item"><span class="rk">4</span><span class="nm"><span class="sym">GLOTTIS</span></span><span class="px">64.76</span><span class="pc up">+11.46%</span></div><div class="g-item"><span class="rk">5</span><span class="nm"><span class="sym">UNIDT</span></span><span class="px">260.81</span><span class="pc up">+10.87%</span></div><div class="g-item"><span class="rk">6</span><span class="nm"><span class="sym">DANGEE</span></span><span class="px">2.97</span><span class="pc up">+10.00%</span></div><div class="g-item"><span class="rk">7</span><span class="nm"><span class="sym">DCMSIL</span></span><span class="px">85.20</span><span class="pc up">+9.99%</span></div><div class="g-item"><span class="rk">8</span><span class="nm"><span class="sym">REMSONSIND</span></span><span class="px">108.82</span><span class="pc up">+8.96%</span></div><div class="g-item"><span class="rk">9</span><span class="nm"><span class="sym">FRONTSP</span></span><span class="px">1,508.60</span><span class="pc up">+8.17%</span></div><div class="g-item"><span class="rk">10</span><span class="nm"><span class="sym">VIKRAN</span></span><span class="px">60.63</span><span class="pc up">+8.00%</span></div><div class="g-item"><span class="rk">11</span><span class="nm"><span class="sym">CHANDAN</span></span><span class="px">239.50</span><span class="pc up">+7.62%</span></div><div class="g-item"><span class="rk">12</span><span class="nm"><span class="sym">JAGSNPHARM</span></span><span class="px">242.26</span><span class="pc up">+7.37%</span></div><div class="g-item"><span class="rk">13</span><span class="nm"><span class="sym">JSIPL</span></span><span class="px">132.30</span><span class="pc up">+5.00%</span></div><div class="g-item"><span class="rk">14</span><span class="nm"><span class="sym">SALSTEEL</span></span><span class="px">89.27</span><span class="pc up">+5.00%</span></div><div class="g-item"><span class="rk">15</span><span class="nm"><span class="sym">SWARAJ</span></span><span class="px">322.50</span><span class="pc up">+5.00%</span></div><div class="g-item"><span class="rk">16</span><span class="nm"><span class="sym">JAYBARMARU</span></span><span class="px">121.90</span><span class="pc up">+5.00%</span></div><div class="g-item"><span class="rk">17</span><span class="nm"><span class="sym">KRONOX</span></span><span class="px">196.75</span><span class="pc up">+4.99%</span></div><div class="g-item"><span class="rk">18</span><span class="nm"><span class="sym">ONIXSOLAR</span></span><span class="px">321.80</span><span class="pc up">+4.99%</span></div><div class="g-item"><span class="rk">19</span><span class="nm"><span class="sym">OPTIVALUE</span></span><span class="px">234.60</span><span class="pc up">+4.99%</span></div><div class="g-item"><span class="rk">20</span><span class="nm"><span class="sym">QUINT</span></span><span class="px">88.80</span><span class="pc up">+4.99%</span></div></div>
+    </div>
+  </div>
+
+  <footer>
+    <span>SRC: TradingView · Yahoo Finance · NSE Indices</span>
+    <span>GEN: 24 Sep 2026 · 14:15 IST</span>
+    <span>For personal research use — not investment advice.</span>
+  </footer>
+</div>
+
+<script>
+/* Decoration only — all data is pre-rendered server-side into this file. */
+(function(){
+"use strict";
+var cv = document.getElementById("stars");
+if(!cv || !cv.getContext) return;
+var cx = cv.getContext("2d"), stars = [];
+function initStars(){
+  cv.width = innerWidth; cv.height = innerHeight; stars = [];
+  for(var i=0;i<130;i++) stars.push({x:Math.random()*cv.width, y:Math.random()*cv.height,
+    r:Math.random()*1.15+0.18, p:Math.random()*Math.PI*2, s:0.4+Math.random()*1.2});
+}
+initStars();
+if (typeof window.addEventListener === "function") window.addEventListener("resize", initStars);
+(function tick(t){
+  cx.clearRect(0,0,cv.width,cv.height);
+  stars.forEach(function(st){
+    var a = 0.18+0.60*Math.abs(Math.sin(t/1400*st.s + st.p));
+    cx.globalAlpha = a; cx.fillStyle = "#9ec9ff";
+    cx.beginPath(); cx.arc(st.x, st.y, st.r, 0, 6.283); cx.fill();
+  });
+  cx.globalAlpha = 1;
+  requestAnimationFrame(tick);
+})(0);
+})();
+</script>
+</body>
+</html>
