@@ -1,0 +1,33 @@
+name: PF dashboard update
+on:
+  schedule:
+    # IST 09:15-15:30 market hours = UTC 03:45-10:00, Mon-Fri
+    - cron: '18,33,48 3 * * 1-5'
+    - cron: '3,18,33,48 4-9 * * 1-5'
+    - cron: '3 10 * * 1-5'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pf-update
+  cancel-in-progress: true
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 1}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Build dashboard
+        run: |
+          cd _pipeline
+          python3 pf_update.py
+      - name: Deploy (stamped + redirector)
+        run: |
+          git config user.name "pf-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -A
+          git commit -m "auto-update $(date -u +'%d %b %Y %H:%M IST' -d '+5 hours 30 minutes')" || echo "nothing changed"
+          git push

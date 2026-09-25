@@ -1,0 +1,41 @@
+{
+  "book_name": "Prat \u2014 Core PF (ex-BracePort, ex-RIL/RE, ex-Bhagyanagar)",
+  "holdings": [
+    {
+      "tv": "NSE:GMMPFAUDLR",
+      "name": "GMM Pfaudler",
+      "exchange_note": "NSE GMMPFAUDLR",
+      "qty": 18806,
+      "avg": 1444.0,
+      "invested": 27151500,
+      "sector": "Producer Manufacturing"
+    },
+    {
+      "tv": "NSE:NEOGEN",
+      "name": "Neogen Chemicals",
+      "exchange_note": "NSE NEOGEN",
+      "qty": 43669,
+      "avg": 2297.0,
+      "invested": 100288162,
+      "sector": "Process Industries"
+    },
+    {
+      "tv": "NSE:RKFORGE",
+      "name": "Ramkrishna Forgings",
+      "exchange_note": "NSE RKFORGE",
+      "qty": 2400,
+      "avg": 735.0,
+      "invested": 1763675,
+      "sector": "Producer Manufacturing"
+    },
+    {
+      "tv": "NSE:VIVIDEL",
+      "name": "Vivid Electromech",
+      "exchange_note": "NSE VIVIDEL (SME)",
+      "qty": 20160,
+      "avg": 1684.0,
+      "invested": 33943027,
+      "sector": "Producer Manufacturing"
+    }
+  ]
+}
