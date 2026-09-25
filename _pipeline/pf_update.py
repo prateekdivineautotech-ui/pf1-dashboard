@@ -19,6 +19,12 @@ if _t < 555 or _t > 935:  # before 09:15 or after 15:35 IST
 # Relocatable: when run from _pipeline (GitHub Actions), operate on repo root
 if os.path.basename(os.path.dirname(os.path.abspath(__file__))) == "_pipeline":
     DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root
+    HERE = os.path.dirname(os.path.abspath(__file__))
+    for _f in ("holdings.json", "pf_dashboard_template.html"):
+        _target = os.path.join(DIR, _f)
+        if not os.path.exists(_target):
+            import shutil as _sh
+            _sh.copy(os.path.join(HERE, _f), _target)
 else:
     HOME = os.path.expanduser("~")
     DIR = os.path.join(HOME, "Claude", "dashboard")
